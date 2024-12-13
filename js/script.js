@@ -1,4 +1,3 @@
-
 const global = {
   currentPage: window.location.pathname,
 };
@@ -46,7 +45,6 @@ async function displayPopularShows() {
     const div = document.createElement('div');
     div.classList.add('card');
     div.innerHTML = `
-        
           <a href="tv-details.html?id=${show.id}">
             ${
               show.poster_path
@@ -69,15 +67,22 @@ async function displayPopularShows() {
             </p>
           </div>
         `;
-        
+
     document.querySelector('#popular-shows').appendChild(div);
   });
 }
 
+// Display Movie Details
 async function displayMovieDetails() {
   const movieId = window.location.search.split('=')[1];
+
   const movie = await fetchAPIData(`movie/${movieId}`);
+
+  // Overlay for background image
+  displayBackgroundImage('movie', movie.backdrop_path);
+
   const div = document.createElement('div');
+
   div.innerHTML = `
   <div class="details-top">
   <div>
@@ -136,15 +141,21 @@ async function displayMovieDetails() {
   </div>
 </div>
   `;
-  displayBackgroundImage('movie', movie.backdrop_path);
+
   document.querySelector('#movie-details').appendChild(div);
 }
+
+// Display Show Details
 async function displayShowDetails() {
   const showId = window.location.search.split('=')[1];
+
   const show = await fetchAPIData(`tv/${showId}`);
+
   // Overlay for background image
   displayBackgroundImage('tv', show.backdrop_path);
+
   const div = document.createElement('div');
+
   div.innerHTML = `
   <div class="details-top">
   <div>
@@ -200,8 +211,11 @@ async function displayShowDetails() {
   </div>
 </div>
   `;
+
   document.querySelector('#show-details').appendChild(div);
 }
+
+// Display Backdrop On Details Pages
 function displayBackgroundImage(type, backgroundPath) {
   const overlayDiv = document.createElement('div');
   overlayDiv.style.backgroundImage = `url(https://image.tmdb.org/t/p/original/${backgroundPath})`;
@@ -215,6 +229,7 @@ function displayBackgroundImage(type, backgroundPath) {
   overlayDiv.style.left = '0';
   overlayDiv.style.zIndex = '-1';
   overlayDiv.style.opacity = '0.1';
+
   if (type === 'movie') {
     document.querySelector('#movie-details').appendChild(overlayDiv);
   } else {
@@ -222,11 +237,57 @@ function displayBackgroundImage(type, backgroundPath) {
   }
 }
 
-function addCommasToNumber(number) {
-  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+// Display Slider Movies
+async function displaySlider() {
+  const { results } = await fetchAPIData('movie/now_playing');
+
+  results.forEach((movie) => {
+    const div = document.createElement('div');
+    div.classList.add('swiper-slide');
+
+    div.innerHTML = `
+      <a href="movie-details.html?id=${movie.id}">
+        <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title}" />
+      </a>
+      <h4 class="swiper-rating">
+        <i class="fas fa-star text-secondary"></i> ${movie.vote_average} / 10
+      </h4>
+    `;
+
+    document.querySelector('.swiper-wrapper').appendChild(div);
+
+    initSwiper();
+  });
 }
+
+function initSwiper() {
+  const swiper = new Swiper('.swiper', {
+    slidesPerView: 1,
+    spaceBetween: 30,
+    freeMode: true,
+    loop: true,
+    autoplay: {
+      delay: 4000,
+      disableOnInteraction: false,
+    },
+    breakpoints: {
+      500: {
+        slidesPerView: 2,
+      },
+      700: {
+        slidesPerView: 3,
+      },
+      1200: {
+        slidesPerView: 4,
+      },
+    },
+  });
+}
+
 // Fetch data from TMDB API
 async function fetchAPIData(endpoint) {
+  // Register your key at https://www.themoviedb.org/settings/api and enter here
+  // Only use this for development or very small projects. You should store your key and make requests from a server
   const API_KEY = '1a1994bde04b2cff875f8e8aa77aeda6';
   const API_URL = 'https://api.themoviedb.org/3/';
 
@@ -261,11 +322,16 @@ function highlightActiveLink() {
   });
 }
 
+function addCommasToNumber(number) {
+  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
 // Init App
 function init() {
   switch (global.currentPage) {
     case '/':
     case '/index.html':
+      displaySlider();
       displayPopularMovies();
       break;
     case '/shows.html':
